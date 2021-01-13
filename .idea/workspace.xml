@@ -161,7 +161,7 @@
     </findStrings>
   </component>
   <component name="Git.Settings">
-    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$/src/main/java/com/bds/easy/delayed" />
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
   </component>
   <component name="IdeDocumentHistory">
     <option name="CHANGED_PATHS">
@@ -298,12 +298,12 @@
       <workItem from="1609229083556" duration="23796000" />
       <workItem from="1609826569034" duration="45683000" />
       <workItem from="1610329230124" duration="7548000" />
-      <workItem from="1610508780406" duration="531000" />
+      <workItem from="1610508780406" duration="961000" />
     </task>
     <servers />
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="77558000" />
+    <option name="totallyTimeSpent" value="77988000" />
   </component>
   <component name="ToolWindowManager">
     <frame x="0" y="0" width="1440" height="900" extended-state="6" />
