@@ -1,0 +1,24 @@
+spring:
+  mvc:
+    view:
+      prefix: classpath:/static/
+      suffix: .html
+    static-path-pattern: /static/**
+  datasource:
+    username: root
+    password: root
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://localhost:3307/delayed?useUnicode=true&characterEncoding=UTF-8&autoReconnect=true&serverTimezone=UTC
+
+easy:
+  delayed:
+    store: jdbc
+
+mybatis:
+  type-handlers-package: com.bds.easy.delayed.type.handler
+  type-aliases-package: com.bds.finance.pojo
+  mapper-locations: classpath:/mapper/*.xml
+mapper:
+  mappers: com.bds.easy.delayed.baseMapper.MyMapper
+  not-empty: false
+  identity: MYSQL
