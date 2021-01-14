@@ -7,7 +7,7 @@
         <result column="group" property="group"/>
         <result column="code" property="code"/>
         <result column="date" property="date"/>
-        <result column="job_class" property="jobClass" typeHandler="com.bds.easy.delayed.type.handler.ClassTypeHandler"/>
+        <result column="job_class" property="jobClass" typeHandler="com.bds.easy.delayed.support.ClassTypeHandler"/>
         <result column="name" property="name"/>
         <result column="description" property="description"/>
         <result column="param" property="param"/>

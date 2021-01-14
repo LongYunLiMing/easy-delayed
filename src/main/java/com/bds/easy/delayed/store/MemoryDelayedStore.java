@@ -1,9 +1,9 @@
 package com.bds.easy.delayed.store;
 
 import com.bds.easy.delayed.core.Delayed;
-import com.bds.easy.delayed.core.DelayedStatusEnum;
+import com.bds.easy.delayed.enums.DelayedStatusEnum;
 import com.bds.easy.delayed.core.DelayedStore;
-import com.bds.easy.delayed.core.Function;
+import com.bds.easy.delayed.support.Function;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang.StringUtils;
 
@@ -29,7 +29,7 @@ public class MemoryDelayedStore implements DelayedStore{
     private Map<String,Map<String,Delayed>> notWaitDelayed = new HashMap<>();
 
     @Override
-    public void insertDelayed(Delayed delayed) throws DelayedException{
+    public void insertDelayed(Delayed delayed){
         if(delayed == null){
             throw new DelayedException("delayed not be null");
         }
@@ -61,7 +61,7 @@ public class MemoryDelayedStore implements DelayedStore{
     }
 
     @Override
-    public List<Delayed> queryDelayedEarliestTrigger(Integer size) throws DelayedException{
+    public List<Delayed> queryDelayedEarliestTrigger(Integer size){
         List<Delayed> result = new ArrayList<>();
         for (Integer i = 0 ; i < size ; i++){
             Delayed wrapper = waitDelayed.pollFirst();
@@ -76,7 +76,7 @@ public class MemoryDelayedStore implements DelayedStore{
     }
 
     @Override
-    public void resetDelayed(List<Delayed> wrappers) throws DelayedException{
+    public void resetDelayed(List<Delayed> wrappers){
         for (Delayed wrapper : wrappers){
             if(this.notWaitDelayed.containsKey(wrapper.getGroup()) && this.notWaitDelayed.get(wrapper.getGroup()).containsKey(wrapper.getCode()) && StringUtils.equals(this.notWaitDelayed.get(wrapper.getGroup()).get(wrapper.getCode()).getStatus(),DelayedStatusEnum.PROCESSING.getStatus())){
                 this.notWaitDelayed.get(wrapper.getGroup()).remove(wrapper.getCode());
@@ -162,7 +162,7 @@ public class MemoryDelayedStore implements DelayedStore{
 
 
     @Override
-    public void pauseJob(String group , String code) throws DelayedException{
+    public void pauseJob(String group , String code){
         AtomicReference<Delayed> target = new AtomicReference<>();
         this.look(group , code , wrapper -> target.set(wrapper));
         Delayed wrapper = target.get();
@@ -180,7 +180,7 @@ public class MemoryDelayedStore implements DelayedStore{
     }
 
     @Override
-    public void pauseJob(String group) throws DelayedException{
+    public void pauseJob(String group){
         List<Delayed> target = new ArrayList<>();
         for (Delayed wrapper : this.waitDelayed){
             if(StringUtils.equals(wrapper.getGroup(),group)){

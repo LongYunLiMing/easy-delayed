@@ -15,7 +15,7 @@ easy:
     store: jdbc
 
 mybatis:
-  type-handlers-package: com.bds.easy.delayed.type.handler
+  type-handlers-package: com.bds.easy.delayed.support
   type-aliases-package: com.bds.finance.pojo
   mapper-locations: classpath:/mapper/*.xml
 mapper:

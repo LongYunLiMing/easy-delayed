@@ -1,4 +1,4 @@
-package com.bds.easy.delayed.type.handler;
+package com.bds.easy.delayed.support;
 
 import org.apache.ibatis.type.BaseTypeHandler;
 import org.apache.ibatis.type.JdbcType;

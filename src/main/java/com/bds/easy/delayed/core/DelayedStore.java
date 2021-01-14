@@ -19,21 +19,21 @@ public interface DelayedStore{
      * @param delayed
      * @return
      */
-    void insertDelayed(Delayed delayed) throws DelayedException;
+    void insertDelayed(Delayed delayed);
 
     /**
      * 查询最早触发的前几条延时任务
      * @param size
      * @return
      */
-    List<Delayed> queryDelayedEarliestTrigger(Integer size) throws DelayedException;
+    List<Delayed> queryDelayedEarliestTrigger(Integer size);
 
     /**
      * 重置延时任务
      * @param wrappers
      * @throws DelayedException
      */
-    void resetDelayed(List<Delayed> wrappers) throws DelayedException;
+    void resetDelayed(List<Delayed> wrappers);
 
     /**
      * 查询指定的延时任务
@@ -68,13 +68,13 @@ public interface DelayedStore{
      * @param group
      * @param code
      */
-    void pauseJob(String group, String code) throws DelayedException;
+    void pauseJob(String group, String code);
 
     /**
      * 暂停指定组的延时任务
      * @param group
      */
-    void pauseJob(String group) throws DelayedException;
+    void pauseJob(String group);
 
     /**
      * 恢复指定延时任务

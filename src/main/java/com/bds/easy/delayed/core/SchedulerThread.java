@@ -1,5 +1,6 @@
 package com.bds.easy.delayed.core;
 
+import com.bds.easy.delayed.enums.ActionEnum;
 import com.bds.easy.delayed.store.DelayedException;
 import org.apache.commons.collections.CollectionUtils;
 import org.slf4j.Logger;
@@ -20,6 +21,11 @@ import java.util.concurrent.atomic.AtomicBoolean;
  */
 public class SchedulerThread extends Thread{
     private final Logger LOGGER = LoggerFactory.getLogger(SchedulerThread.class);
+    public static final Long DAY = Long.valueOf(1000 * 60 * 60 * 24);
+    public static final Long HOUR = Long.valueOf(1000 * 60 * 60);
+    public static final Long MINUTE = Long.valueOf(1000 * 60);
+    public static final Long SECOND = Long.valueOf(1000);
+
     private final Object sigLock;
     private AtomicBoolean halted;
     private AtomicBoolean paused;
@@ -299,11 +305,10 @@ public class SchedulerThread extends Thread{
                     }
                     try{
                         //休眠等待触发时刻
-                        System.out.println("需要休眠时长：" + remainingTime);
+                        System.out.println( this.beautifulDate(remainingTime) + "后触发下一个任务");
                         synchronized (this.sigLock){
                             this.sigLock.wait(remainingTime);
                         }
-                        System.out.println("休眠结束，当前时间戳：" + System.currentTimeMillis());
                         //准备执行调度任务
                         this.executeJob(delayed);
                         //消费延时任务，更改已经触发的延时任务状态
@@ -322,8 +327,33 @@ public class SchedulerThread extends Thread{
         }
     }
 
-    public List<Listener> getListeners(){
-        return listeners;
+    private String beautifulDate(long remainingTime){
+        StringBuilder result = new StringBuilder();
+        if(remainingTime / DAY > 0){
+            result.append(remainingTime / DAY);
+            result.append("天");
+            remainingTime = remainingTime % DAY;
+        }
+        if(remainingTime / HOUR > 0){
+            result.append(remainingTime / HOUR);
+            result.append("小时");
+            remainingTime = remainingTime % HOUR;
+        }
+        if(remainingTime / MINUTE > 0){
+            result.append(remainingTime / MINUTE);
+            result.append("分钟");
+            remainingTime = remainingTime % MINUTE;
+        }
+        if(remainingTime / SECOND > 0){
+            result.append(remainingTime / SECOND);
+            result.append("秒");
+            remainingTime = remainingTime % SECOND;
+        }
+        if(remainingTime > 0){
+            result.append(remainingTime);
+            result.append("毫秒");
+        }
+        return result.toString();
     }
 
     public void addListeners(List<Listener> listeners){
@@ -334,10 +364,6 @@ public class SchedulerThread extends Thread{
             this.listeners = new ArrayList<>();
         }
         this.listeners.addAll(listeners);
-    }
-
-    public List<Plugin> getPlugins(){
-        return plugins;
     }
 
     public void addPlugins(List<Plugin> plugins){

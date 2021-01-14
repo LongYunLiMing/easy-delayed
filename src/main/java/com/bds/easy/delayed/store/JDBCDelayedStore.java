@@ -1,7 +1,7 @@
 package com.bds.easy.delayed.store;
 
 import com.bds.easy.delayed.core.Delayed;
-import com.bds.easy.delayed.core.DelayedStatusEnum;
+import com.bds.easy.delayed.enums.DelayedStatusEnum;
 import com.bds.easy.delayed.core.DelayedStore;
 import com.bds.easy.delayed.mapper.DelayedMapper;
 import org.apache.commons.collections.CollectionUtils;
@@ -26,13 +26,13 @@ public class JDBCDelayedStore implements DelayedStore{
     private DelayedMapper mapper;
 
     @Override
-    public void insertDelayed(Delayed delayed) throws DelayedException{
+    public void insertDelayed(Delayed delayed){
         delayed.setStatus("wait");
         mapper.insert(delayed);
     }
 
     @Override
-    public List<Delayed> queryDelayedEarliestTrigger(Integer size) throws DelayedException{
+    public List<Delayed> queryDelayedEarliestTrigger(Integer size){
         List<Delayed> delayedWrappers = mapper.queryDelayedEarliestTrigger(size);
         if(CollectionUtils.isNotEmpty(delayedWrappers)){
             Set<Long> ids = delayedWrappers.stream().map(Delayed :: getId).collect(Collectors.toSet());
@@ -42,7 +42,7 @@ public class JDBCDelayedStore implements DelayedStore{
     }
 
     @Override
-    public void resetDelayed(List<Delayed> wrappers) throws DelayedException{
+    public void resetDelayed(List<Delayed> wrappers){
         if(CollectionUtils.isEmpty(wrappers)){
             return;
         }
@@ -70,12 +70,12 @@ public class JDBCDelayedStore implements DelayedStore{
     }
 
     @Override
-    public void pauseJob(String group , String code) throws DelayedException{
+    public void pauseJob(String group , String code){
         mapper.updateStatus(group, code, "pause");
     }
 
     @Override
-    public void pauseJob(String group) throws DelayedException{
+    public void pauseJob(String group){
         mapper.updateStatusByGroup(group, "pause");
     }
 

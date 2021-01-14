@@ -8,7 +8,7 @@ package com.bds.easy.delayed.store;
  * @lastUpdateBy: deli.yang@hand-china.com
  * @lastUpdateDate: 2020/12/30
  */
-public class DelayedException extends Exception{
+public class DelayedException extends RuntimeException{
     public DelayedException(){
     }
 

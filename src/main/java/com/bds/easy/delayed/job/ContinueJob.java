@@ -23,16 +23,18 @@ public abstract class ContinueJob implements Job{
     public void execute(JobExecuteContext context){
         Delayed delayed = context.getDelayed();
         Map<String, String> param = delayed.getParamMap();
-
-        if(param == null || !param.containsKey("count")){
+        if(param == null){
             param = new HashMap<>();
-            param.put("count","1");
             context.getDelayed().setParamMap(param);
+        }
+        if(!param.containsKey("count")){
+            param.put("count","1");
         }
         handle(context,Integer.valueOf(param.get("count")));
         String count = param.get("count");
         param.put("count",String.valueOf(Long.valueOf(count)+1));
-        delayed.setCode(delayed.getCode() + ":" + System.currentTimeMillis());
+        delayed.setParamMap(param);
+        delayed.setCode(delayed.getCode().split(":")[0] + ":" + System.currentTimeMillis());
         delayed.setDate(new Date(System.currentTimeMillis() + spacingTime()));
         delayed.setId(null);
         try{

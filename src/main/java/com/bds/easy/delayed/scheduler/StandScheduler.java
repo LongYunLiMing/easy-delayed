@@ -1,6 +1,7 @@
 package com.bds.easy.delayed.scheduler;
 
 import com.bds.easy.delayed.core.Delayed;
+import com.bds.easy.delayed.core.DelayedStore;
 import com.bds.easy.delayed.core.Listener;
 import com.bds.easy.delayed.core.Plugin;
 import com.bds.easy.delayed.core.Scheduler;
@@ -11,6 +12,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.List;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 
 /**
  * description: 调度器实现类
@@ -25,9 +29,13 @@ public class StandScheduler implements Scheduler{
 
     private SchedulerThread schedulerThread;
 
-    public StandScheduler(SchedulerThread schedulerThread){
-        this.schedulerThread = schedulerThread;
+    public StandScheduler(DelayedStore delayedStore){
+        this.schedulerThread = new SchedulerThread(new ThreadPoolExecutor(1 , 1 , 0L , TimeUnit.MILLISECONDS , new LinkedBlockingQueue<>()),delayedStore);
         this.schedulerThread.setScheduler(this);
+    }
+
+    public void setSchedulerThread(SchedulerThread schedulerThread){
+        this.schedulerThread = schedulerThread;
     }
 
     @Override
