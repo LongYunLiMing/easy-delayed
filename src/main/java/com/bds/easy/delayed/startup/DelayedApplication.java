@@ -22,8 +22,8 @@ import tk.mybatis.spring.annotation.MapperScan;
 @SpringBootApplication
 @EnabledDelayedAutoConfiguration
 @MapperScan(basePackageClasses = {DelayedMapper.class})
-public class Main{
+public class DelayedApplication{
     public static void main(String[] args)throws Exception{
-        SpringApplication.run(Main.class,args);
+        SpringApplication.run(DelayedApplication.class,args);
     }
 }

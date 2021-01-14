@@ -23,15 +23,5 @@ public class DemoJob implements Job{
     public void execute(JobExecuteContext context){
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss");
         System.out.println("触发延时任务 —— 当前时间："+sdf.format(new Date()));
-        /*Scheduler scheduler = context.getScheduler();
-        Delayed delayed = context.getDelayed();
-        delayed.setCode(System.currentTimeMillis()+"");
-        delayed.setTimestamp(System.currentTimeMillis() + 60 * 1000);
-        System.out.println("添加一个延时任务 —— 时间："+sdf.format(delayed.getTimestamp()));
-        try{
-            scheduler.scheduleJob(delayed);
-        } catch (SchedulerException e){
-            e.printStackTrace();
-        }*/
     }
 }

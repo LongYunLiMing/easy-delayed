@@ -9,5 +9,9 @@ package com.bds.easy.delayed.core;
  * @lastUpdateDate: 2020/12/29
  */
 public interface Job{
+    /**
+     * 具体的任务逻辑
+     * @param context
+     */
     void execute(JobExecuteContext context);
 }

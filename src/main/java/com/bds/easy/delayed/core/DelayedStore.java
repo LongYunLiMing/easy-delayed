@@ -26,14 +26,14 @@ public interface DelayedStore{
      * @param size
      * @return
      */
-    List<DelayedWrapper> queryDelayedEarliestTrigger(Integer size) throws DelayedException;
+    List<Delayed> queryDelayedEarliestTrigger(Integer size) throws DelayedException;
 
     /**
      * 重置延时任务
      * @param wrappers
      * @throws DelayedException
      */
-    void resetDelayed(List<DelayedWrapper> wrappers) throws DelayedException;
+    void resetDelayed(List<Delayed> wrappers) throws DelayedException;
 
     /**
      * 查询指定的延时任务
@@ -41,14 +41,14 @@ public interface DelayedStore{
      * @param code
      * @return
      */
-    DelayedWrapper queryDelayed(String group, String code);
+    Delayed queryDelayed(String group, String code);
 
     /**
      * 查询指定组的延时任务
      * @param group
      * @return
      */
-    List<DelayedWrapper> queryDelayed(String group);
+    List<Delayed> queryDelayed(String group);
 
     /**
      * 删除指定的延时任务
@@ -93,5 +93,5 @@ public interface DelayedStore{
      * 消费延时任务
      * @param delayed
      */
-    void consumeDelayed(DelayedWrapper delayed);
+    void consumeDelayed(Delayed delayed);
 }

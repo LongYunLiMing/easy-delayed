@@ -2,9 +2,7 @@ package com.bds.easy.delayed.mapper;
 
 import com.bds.easy.delayed.baseMapper.MyMapper;
 import com.bds.easy.delayed.core.Delayed;
-import com.bds.easy.delayed.core.DelayedWrapper;
 import org.apache.ibatis.annotations.Param;
-import tk.mybatis.mapper.common.BaseMapper;
 
 import java.util.List;
 import java.util.Set;
@@ -17,14 +15,14 @@ import java.util.Set;
  * @lastUpdateBy: deli.yang@hand-china.com
  * @lastUpdateDate: 2021/01/08
  */
-public interface DelayedMapper extends MyMapper<DelayedWrapper>{
+public interface DelayedMapper extends MyMapper<Delayed>{
 
     /**
      * 查询最早触发的前几位
      * @param size
      * @return
      */
-    List<DelayedWrapper> queryDelayedEarliestTrigger(@Param("size") Integer size);
+    List<Delayed> queryDelayedEarliestTrigger(@Param("size") Integer size);
 
     /**
      * 将当前延时任务从 processing 重新变成 wait

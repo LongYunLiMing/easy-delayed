@@ -1,8 +1,11 @@
 package com.bds.easy.delayed.core;
 
+import com.alibaba.fastjson.JSON;
+
 import javax.persistence.Column;
 import javax.persistence.Table;
 import java.util.Date;
+import java.util.Map;
 
 /**
  * description: 延时队列信息
@@ -27,6 +30,7 @@ public class Delayed{
     }
 
     private Long id;
+    private String status;
     //组（必填）
     @Column(name = "`group`")
     private String group;
@@ -38,6 +42,12 @@ public class Delayed{
     private Date date;
     //执行 Job(必填)
     private Class<? extends Job> jobClass;
+
+    private String description;
+
+    private String param;
+
+    private Map<String,String> paramMap;
 
     public Long getId(){
         return id;
@@ -85,5 +95,39 @@ public class Delayed{
 
     public void setJobClass(Class<? extends Job> jobClass){
         this.jobClass = jobClass;
+    }
+
+    public String getParam(){
+        return param;
+    }
+
+    public void setParam(String param){
+        this.param = param;
+        this.paramMap = JSON.parseObject(param,Map.class);
+    }
+
+    public Map<String, String> getParamMap(){
+        return paramMap;
+    }
+
+    public void setParamMap(Map<String, String> paramMap){
+        this.paramMap = paramMap;
+        this.param = JSON.toJSONString(paramMap);
+    }
+
+    public String getDescription(){
+        return description;
+    }
+
+    public void setDescription(String description){
+        this.description = description;
+    }
+
+    public String getStatus(){
+        return status;
+    }
+
+    public void setStatus(String status){
+        this.status = status;
     }
 }

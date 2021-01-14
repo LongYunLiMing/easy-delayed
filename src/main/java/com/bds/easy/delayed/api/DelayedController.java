@@ -12,12 +12,13 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import javax.servlet.http.HttpServletRequest;
 import java.util.Date;
+import java.util.Map;
 
 /**
  * description:
@@ -63,12 +64,14 @@ public class DelayedController{
                                             @RequestParam("code") String code,
                                             @RequestParam("jobClass")String jobClass,
                                             @RequestParam("name")String name,
-                                            @RequestParam("date")@DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") Date date) throws ClassNotFoundException, SchedulerException{
+                                            @RequestParam("date")@DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") Date date,
+                                            @RequestBody Map<String,String> param) throws ClassNotFoundException, SchedulerException{
         Delayed delayed = new Delayed();
         delayed.setGroup(group);
         delayed.setCode(code);
         delayed.setDate(date);
         delayed.setName(name);
+        delayed.setParamMap(param);
         delayed.setJobClass((Class<? extends Job>) Class.forName(jobClass));
         scheduler.scheduleJob(delayed);
         return new ResponseEntity<>(true, HttpStatus.OK);

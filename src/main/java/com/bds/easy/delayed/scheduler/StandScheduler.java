@@ -1,7 +1,6 @@
 package com.bds.easy.delayed.scheduler;
 
 import com.bds.easy.delayed.core.Delayed;
-import com.bds.easy.delayed.core.DelayedWrapper;
 import com.bds.easy.delayed.core.Listener;
 import com.bds.easy.delayed.core.Plugin;
 import com.bds.easy.delayed.core.Scheduler;
@@ -68,7 +67,7 @@ public class StandScheduler implements Scheduler{
 
     @Override
     public void scheduleJob(Delayed delayed) throws SchedulerException{
-        DelayedWrapper wrapper = schedulerThread.getDelayedStore().queryDelayed(delayed.getGroup() , delayed.getCode());
+        Delayed wrapper = schedulerThread.getDelayedStore().queryDelayed(delayed.getGroup() , delayed.getCode());
         if(wrapper != null){
             throw new SchedulerException("group and code not be repeat —— [" + delayed.getGroup() + "],[" + delayed.getCode() + "]");
         }

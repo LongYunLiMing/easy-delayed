@@ -93,7 +93,7 @@ public class SchedulerThread extends Thread{
      * @param code
      */
     public void triggerJob(String group , String code) throws SchedulerException{
-        DelayedWrapper delayedWrapper = this.delayedStore.queryDelayed(group , code);
+        Delayed delayedWrapper = this.delayedStore.queryDelayed(group , code);
         if(delayedWrapper == null){
             throw new SchedulerException("delayed not exist");
         }
@@ -106,11 +106,11 @@ public class SchedulerThread extends Thread{
      * @throws SchedulerException
      */
     public void triggerJob(String group)throws SchedulerException{
-        List<DelayedWrapper> delayedWrappers = this.delayedStore.queryDelayed(group);
+        List<Delayed> delayedWrappers = this.delayedStore.queryDelayed(group);
         if(CollectionUtils.isEmpty(delayedWrappers)){
             return;
         }
-        for (DelayedWrapper wrapper : delayedWrappers){
+        for (Delayed wrapper : delayedWrappers){
             this.executeJob(wrapper);
         }
     }
@@ -172,7 +172,7 @@ public class SchedulerThread extends Thread{
         this.notifyMainThread();
     }
 
-    private void executeJob(DelayedWrapper delayedWrapper){
+    private void executeJob(Delayed delayedWrapper){
         Job job = this.instanceJob(delayedWrapper.getJobClass());
         this.executor.execute(() -> {
             JobExecuteContext context = JobExecuteContext.create(delayedWrapper , this.scheduler);
@@ -272,7 +272,7 @@ public class SchedulerThread extends Thread{
             }
             try{
                 //获取最早触发的前几位延时任务
-                List<DelayedWrapper> delayeds = this.delayedStore.queryDelayedEarliestTrigger(size);
+                List<Delayed> delayeds = this.delayedStore.queryDelayedEarliestTrigger(size);
                 if(CollectionUtils.isEmpty(delayeds)){
                     try{
                         synchronized (this.sigLock){
@@ -284,7 +284,7 @@ public class SchedulerThread extends Thread{
                     }
                 }
                 Integer flag = 0;
-                for (DelayedWrapper delayed : delayeds){
+                for (Delayed delayed : delayeds){
                     long currentMill = System.currentTimeMillis();
                     long remainingTime = delayed.getDate().getTime() - currentMill;
                     //如果延时任务的触发时间已经过了，并且过期
@@ -299,7 +299,6 @@ public class SchedulerThread extends Thread{
                     }
                     try{
                         //休眠等待触发时刻
-                        System.out.println("休眠等待，当前时间戳：" + System.currentTimeMillis());
                         System.out.println("需要休眠时长：" + remainingTime);
                         synchronized (this.sigLock){
                             this.sigLock.wait(remainingTime);

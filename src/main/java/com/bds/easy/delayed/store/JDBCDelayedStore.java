@@ -3,7 +3,6 @@ package com.bds.easy.delayed.store;
 import com.bds.easy.delayed.core.Delayed;
 import com.bds.easy.delayed.core.DelayedStatusEnum;
 import com.bds.easy.delayed.core.DelayedStore;
-import com.bds.easy.delayed.core.DelayedWrapper;
 import com.bds.easy.delayed.mapper.DelayedMapper;
 import org.apache.commons.collections.CollectionUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -28,47 +27,46 @@ public class JDBCDelayedStore implements DelayedStore{
 
     @Override
     public void insertDelayed(Delayed delayed) throws DelayedException{
-        DelayedWrapper wrapper = DelayedWrapper.wrapper(delayed);
-        wrapper.setStatus("wait");
-         mapper.insert(wrapper);
+        delayed.setStatus("wait");
+        mapper.insert(delayed);
     }
 
     @Override
-    public List<DelayedWrapper> queryDelayedEarliestTrigger(Integer size) throws DelayedException{
-        List<DelayedWrapper> delayedWrappers = mapper.queryDelayedEarliestTrigger(size);
+    public List<Delayed> queryDelayedEarliestTrigger(Integer size) throws DelayedException{
+        List<Delayed> delayedWrappers = mapper.queryDelayedEarliestTrigger(size);
         if(CollectionUtils.isNotEmpty(delayedWrappers)){
-            Set<Long> ids = delayedWrappers.stream().map(DelayedWrapper :: getId).collect(Collectors.toSet());
+            Set<Long> ids = delayedWrappers.stream().map(Delayed :: getId).collect(Collectors.toSet());
             mapper.updateStatusByIds(ids,"processing");
         }
         return delayedWrappers;
     }
 
     @Override
-    public void resetDelayed(List<DelayedWrapper> wrappers) throws DelayedException{
+    public void resetDelayed(List<Delayed> wrappers) throws DelayedException{
         if(CollectionUtils.isEmpty(wrappers)){
             return;
         }
-        mapper.resetDelayed(wrappers.stream().map(DelayedWrapper::getId).collect(Collectors.toSet()));
+        mapper.resetDelayed(wrappers.stream().map(Delayed::getId).collect(Collectors.toSet()));
     }
 
     @Override
-    public DelayedWrapper queryDelayed(String group , String code){
-        return mapper.selectOne(new DelayedWrapper(group, code));
+    public Delayed queryDelayed(String group , String code){
+        return mapper.selectOne(new Delayed(group, code));
     }
 
     @Override
-    public List<DelayedWrapper> queryDelayed(String group){
-        return mapper.select(new DelayedWrapper(group));
+    public List<Delayed> queryDelayed(String group){
+        return mapper.select(new Delayed(group));
     }
 
     @Override
     public void deleteJob(String group , String code){
-        mapper.delete(new DelayedWrapper(group, code));
+        mapper.delete(new Delayed(group, code));
     }
 
     @Override
     public void deleteJob(String group){
-        mapper.delete(new DelayedWrapper(group));
+        mapper.delete(new Delayed(group));
     }
 
     @Override
@@ -92,7 +90,7 @@ public class JDBCDelayedStore implements DelayedStore{
     }
 
     @Override
-    public void consumeDelayed(DelayedWrapper delayed){
+    public void consumeDelayed(Delayed delayed){
         mapper.updateStatusByIds(Collections.singleton(delayed.getId()) , DelayedStatusEnum.TRIGGERED.getStatus());
     }
 }
