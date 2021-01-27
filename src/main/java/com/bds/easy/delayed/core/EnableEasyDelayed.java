@@ -19,4 +19,4 @@ import java.lang.annotation.Target;
 @Target(ElementType.TYPE)
 @Retention(RetentionPolicy.RUNTIME)
 @Import({EasyDelayedConfiguration.class, DelayedController.class})
-public @interface EnabledDelayedAutoConfiguration{}
+public @interface EnableEasyDelayed{}

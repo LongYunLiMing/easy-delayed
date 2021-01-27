@@ -11,7 +11,7 @@
         <relativePath/> <!-- lookup parent from repository -->
     </parent>
     <groupId>com.bds.easy</groupId>
-    <artifactId>easy.delayed</artifactId>
+    <artifactId>delayed</artifactId>
     <version>1.0-SNAPSHOT</version>
 
     <dependencies>
