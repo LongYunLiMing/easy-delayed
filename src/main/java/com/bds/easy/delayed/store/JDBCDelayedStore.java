@@ -1,13 +1,17 @@
 package com.bds.easy.delayed.store;
 
 import com.bds.easy.delayed.core.Delayed;
-import com.bds.easy.delayed.enums.DelayedStatusEnum;
 import com.bds.easy.delayed.core.DelayedStore;
-import com.bds.easy.delayed.mapper.DelayedMapper;
 import org.apache.commons.collections.CollectionUtils;
-import org.springframework.beans.factory.annotation.Autowired;
 
-import java.util.Collections;
+import javax.sql.DataSource;
+import java.sql.Connection;
+import java.sql.Date;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -21,76 +25,275 @@ import java.util.stream.Collectors;
  * @lastUpdateDate: 2021/01/08
  */
 public class JDBCDelayedStore implements DelayedStore{
+    public static final String FIELD_ID = "ID";
+    public static final String FIELD_STATUS = "STATUS";
+    public static final String FIELD_GROUP = "GROUP";
+    public static final String FIELD_CODE = "CODE";
+    public static final String FIELD_JOB_CLASS = "JOB_CLASS";
+    public static final String FIELD_DATE = "DATE";
+    public static final String FIELD_NAME = "NAME";
+    public static final String FIELD_DESCRIPTION = "DESCRIPTION";
+    public static final String FIELD_PARAM = "PARAM";
+    public static final String INSERT_SQL = "INSERT INTO `DELAYED_JOB`(`ID`, `STATUS`, `GROUP`, `CODE`, `JOB_CLASS`, `DATE`, `NAME`, `DESCRIPTION`, `PARAM`) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);";
+    public static final String QUERY_DELAYED_EARLIEST_TRIGGER_SQL = "SELECT ID,STATUS,`GROUP`,CODE,DATE,JOB_CLASS,NAME,DESCRIPTION,PARAM FROM DELAYED_JOB WHERE STATUS IN ('WAIT','PROCESSING') AND DATE > CURRENT_TIMESTAMP ORDER BY DATE ASC LIMIT 0, ?";
+    public static final String UPDATE_STATUS_BY_IDS_SQL = "UPDATE DELAYED_JOB SET STATUS = ? WHERE ID IN (IDS)";
+    public static final String RESET_DELAYED_SQL = "UPDATE DELAYED_JOB SET STATUS = 'WAIT' STATUS = 'PROCESSING' AND ID IN (IDS)";
+    public static final String SELECT_BY_GROUP_AND_CODE_SQL = "SELECT ID,STATUS,`GROUP`,CODE,DATE,JOB_CLASS,NAME,DESCRIPTION,PARAM FROM DELAYED_JOB WHERE GROUP = ? AND CODE = ?";
+    public static final String SELECT_BY_GROUP_SQL = "SELECT ID,STATUS,`GROUP`,CODE,DATE,JOB_CLASS,NAME,DESCRIPTION,PARAM FROM DELAYED_JOB WHERE GROUP = ?";
+    public static final String DELETE_BY_GROUP_AND_CODE_SQL = "DELETE FROM `DELAYED_JOB` WHERE GROUP = ? AND CODE = ?";
+    public static final String DELETE_BY_GROUP_SQL = "DELETE FROM `DELAYED_JOB` WHERE GROUP = ?";
+    public static final String DELETE_BY_ID_SQL = "DELETE FROM `DELAYED_JOB` WHERE ID = ?";
+    public static final String UPDATE_STATUS_BY_GROUP_CODE_SQL = "UPDATE DELAYED_JOB SET STATUS = ? WHERE GROUP = ? AND CODE = ?";
+    public static final String UPDATE_STATUS_BY_GROUP_SQL = "UPDATE DELAYED_JOB SET STATUS = ? WHERE GROUP = ?";
 
-    @Autowired
-    private DelayedMapper mapper;
+    private Connection connection;
 
-    @Override
-    public void insertDelayed(Delayed delayed){
-        delayed.setStatus("wait");
-        mapper.insert(delayed);
-    }
-
-    @Override
-    public List<Delayed> queryDelayedEarliestTrigger(Integer size){
-        List<Delayed> delayedWrappers = mapper.queryDelayedEarliestTrigger(size);
-        if(CollectionUtils.isNotEmpty(delayedWrappers)){
-            Set<Long> ids = delayedWrappers.stream().map(Delayed :: getId).collect(Collectors.toSet());
-            mapper.updateStatusByIds(ids,"processing");
+    public JDBCDelayedStore(DataSource dataSource){
+        try{
+            connection = dataSource.getConnection();
+        }catch (SQLException e){
+            throw new DelayedException(e);
+        } catch (DelayedException e){
+            e.printStackTrace();
         }
-        return delayedWrappers;
     }
 
     @Override
-    public void resetDelayed(List<Delayed> wrappers){
-        if(CollectionUtils.isEmpty(wrappers)){
+    public void insertDelayed(Delayed delayed) throws DelayedException{
+        delayed.setStatus("wait");
+        PreparedStatement ps = null;
+        try{
+            ps = this.connection.prepareStatement(INSERT_SQL);
+            ps.setString(2,"wait");
+            ps.setString(3,delayed.getGroup());
+            ps.setString(4,delayed.getCode());
+            ps.setString(5,delayed.getJobClass().getName());
+            if(delayed.getDate() != null){
+                ps.setDate(6,new Date(delayed.getDate().getTime()));
+            }
+            ps.setString(7,delayed.getName());
+            ps.setString(8,delayed.getDescription());
+            ps.setString(9,delayed.getParam());
+
+            ps.executeUpdate();
+        }catch (SQLException e){
+            throw new DelayedException(e);
+        } finally{
+            closeStatement(ps);
+        }
+    }
+
+    @Override
+    public List<Delayed> queryDelayedEarliestTrigger(Integer size) throws DelayedException{
+        PreparedStatement ps = null;
+        PreparedStatement updatePs = null;
+        List<Delayed> result = new ArrayList<>();
+        try{
+            ps = this.connection.prepareStatement(QUERY_DELAYED_EARLIEST_TRIGGER_SQL);
+            ps.setInt(1,size);
+            ResultSet rs = ps.executeQuery();
+            while (rs.next()){
+                result.add(Delayed.getInstance(rs));
+            }
+            if(CollectionUtils.isNotEmpty(result)){
+                Set<Long> ids = result.stream().map(Delayed :: getId).collect(Collectors.toSet());
+                String sql = this.getUpdateStatusSQL(ids.size());
+                updatePs = this.connection.prepareStatement(sql);
+                updatePs.setString(1,"processing");
+                Integer index = 2;
+                for (Long id : ids){
+                    updatePs.setLong(index,id);
+                    index ++;
+                }
+                updatePs.executeUpdate();
+            }
+        }catch (SQLException e){
+            throw new DelayedException(e);
+        }finally{
+            closeStatement(ps);
+            closeStatement(updatePs);
+        }
+        return result;
+    }
+
+    private String getUpdateStatusSQL(Integer size){
+        StringBuilder ids = new StringBuilder();
+        for (Integer i = 0 ; i < size ; i++){
+            if(i != 0){
+                ids.append("?");
+            } else {
+                ids.append(",?");
+            }
+        }
+        return UPDATE_STATUS_BY_IDS_SQL.replace("IDS" , ids);
+    }
+
+    @Override
+    public void resetDelayed(List<Delayed> delayeds) throws DelayedException{
+        if(CollectionUtils.isEmpty(delayeds)){
             return;
         }
-        mapper.resetDelayed(wrappers.stream().map(Delayed::getId).collect(Collectors.toSet()));
+        Set<Long> idSet= delayeds.stream().map(Delayed :: getId).collect(Collectors.toSet());
+        StringBuilder ids = new StringBuilder();
+        for (Integer i = 0 ; i < idSet.size() ; i++){
+            if(i != 0){
+                ids.append("?");
+            } else {
+                ids.append(",?");
+            }
+        }
+        String sql = RESET_DELAYED_SQL.replace("IDS" , ids);
+        PreparedStatement ps = null;
+        try{
+            ps = this.connection.prepareStatement(sql);
+            Integer index = 1;
+            for (Long id : idSet){
+                ps.setLong(index,id);
+                index ++;
+            }
+        }catch (SQLException e){
+            throw new DelayedException(e);
+        }finally{
+            closeStatement(ps);
+        }
     }
 
     @Override
-    public Delayed queryDelayed(String group , String code){
-        return mapper.selectOne(new Delayed(group, code));
+    public Delayed queryDelayed(String group , String code) throws DelayedException{
+        PreparedStatement ps = null;
+        Delayed result = null;
+        try{
+            ps = this.connection.prepareStatement(SELECT_BY_GROUP_AND_CODE_SQL);
+            ps.setString(1,group);
+            ps.setString(2,code);
+            ResultSet rs = ps.executeQuery();
+            if(rs.next()){
+                result = Delayed.getInstance(rs);
+            }
+        }catch (SQLException e){
+            throw new DelayedException(e);
+        }finally{
+            closeStatement(ps);
+        }
+        return result;
     }
 
     @Override
-    public List<Delayed> queryDelayed(String group){
-        return mapper.select(new Delayed(group));
+    public List<Delayed> queryDelayed(String group) throws DelayedException{
+        PreparedStatement ps = null;
+        List<Delayed> result = null;
+        try{
+            ps = this.connection.prepareStatement(SELECT_BY_GROUP_SQL);
+            ps.setString(1,group);
+            ResultSet rs = ps.executeQuery();
+            while (rs.next()){
+                result.add(Delayed.getInstance(rs));
+            }
+        }catch (SQLException e){
+            throw new DelayedException(e);
+        }finally{
+            closeStatement(ps);
+        }
+        return result;
     }
 
     @Override
-    public void deleteJob(String group , String code){
-        mapper.delete(new Delayed(group, code));
+    public void deleteJob(String group , String code) throws DelayedException{
+        PreparedStatement ps = null;
+        try{
+            ps = this.connection.prepareStatement(DELETE_BY_GROUP_AND_CODE_SQL);
+            ps.setString(1,group);
+            ps.setString(2,code);
+            ps.executeUpdate();
+        }catch (SQLException e){
+            throw new DelayedException(e);
+        }finally{
+            closeStatement(ps);
+        }
     }
 
     @Override
-    public void deleteJob(String group){
-        mapper.delete(new Delayed(group));
+    public void deleteJob(String group) throws DelayedException{
+        PreparedStatement ps = null;
+        try{
+            ps = this.connection.prepareStatement(DELETE_BY_GROUP_SQL);
+            ps.setString(1,group);
+            ps.executeUpdate();
+        }catch (SQLException e){
+            throw new DelayedException(e);
+        }finally{
+            closeStatement(ps);
+        }
     }
 
     @Override
-    public void pauseJob(String group , String code){
-        mapper.updateStatus(group, code, "pause");
+    public void pauseJob(String group , String code) throws DelayedException{
+        this.updateStatusByGroupCode("pause",group,code);
+    }
+
+    private void updateStatusByGroupCode(String status, String group, String code) throws DelayedException{
+        PreparedStatement ps = null;
+        try{
+            ps = this.connection.prepareStatement(UPDATE_STATUS_BY_GROUP_CODE_SQL);
+            ps.setString(1,status);
+            ps.setString(2,group);
+            ps.setString(3,code);
+            ps.executeUpdate();
+        }catch (SQLException e){
+            throw new DelayedException(e);
+        }finally{
+            closeStatement(ps);
+        }
     }
 
     @Override
-    public void pauseJob(String group){
-        mapper.updateStatusByGroup(group, "pause");
+    public void pauseJob(String group) throws DelayedException{
+        this.updateStatusByGroup("pause",group);
+    }
+
+    private void updateStatusByGroup(String status, String group) throws DelayedException{
+        PreparedStatement ps = null;
+        try{
+            ps = this.connection.prepareStatement(UPDATE_STATUS_BY_GROUP_SQL);
+            ps.setString(1,status);
+            ps.setString(2,group);
+            ps.executeUpdate();
+        }catch (SQLException e){
+            throw new DelayedException(e);
+        }finally{
+            closeStatement(ps);
+        }
     }
 
     @Override
-    public void resumeJob(String group , String code){
-        mapper.updateStatus(group, code, "wait");
+    public void resumeJob(String group , String code) throws DelayedException{
+        this.updateStatusByGroupCode("wait",group, code);
     }
 
     @Override
-    public void resumeJob(String group){
-        mapper.updateStatusByGroup(group, "wait");
+    public void resumeJob(String group) throws DelayedException{
+        this.updateStatusByGroup("wait",group );
     }
 
     @Override
-    public void consumeDelayed(Delayed delayed){
-        mapper.updateStatusByIds(Collections.singleton(delayed.getId()) , DelayedStatusEnum.TRIGGERED.getStatus());
+    public void consumeDelayed(Delayed delayed) throws DelayedException{
+        PreparedStatement ps = null;
+        try{
+            ps = this.connection.prepareStatement(DELETE_BY_ID_SQL);
+            ps.setLong(1,delayed.getId());
+        }catch (SQLException e){
+            throw new DelayedException(e);
+        }finally{
+            closeStatement(ps);
+        }
+    }
+
+    protected static void closeStatement(Statement statement) {
+        if (null != statement) {
+            try {
+                statement.close();
+            } catch (SQLException ignore) {
+            }
+        }
     }
 }

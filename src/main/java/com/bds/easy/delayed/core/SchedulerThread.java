@@ -126,7 +126,7 @@ public class SchedulerThread extends Thread{
      * @param group
      * @param code
      */
-    public void deleteJob(String group, String code){
+    public void deleteJob(String group, String code) throws SchedulerException{
         this.delayedStore.deleteJob(group,code);
         this.notifyMainThread();
     }
@@ -135,7 +135,7 @@ public class SchedulerThread extends Thread{
      * 删除指定组的延时任务
      * @param group
      */
-    public void deleteJob(String group){
+    public void deleteJob(String group) throws SchedulerException{
         this.delayedStore.deleteJob(group);
         this.notifyMainThread();
     }
@@ -145,7 +145,7 @@ public class SchedulerThread extends Thread{
      * @param group
      * @param code
      */
-    public void pauseJob(String group, String code) throws SchedulerException, DelayedException{
+    public void pauseJob(String group, String code) throws SchedulerException{
         this.delayedStore.pauseJob(group, code);
         this.notifyMainThread();
     }
@@ -154,7 +154,7 @@ public class SchedulerThread extends Thread{
      * 暂停指定组的延时任务
      * @param group
      */
-    public void pauseJob(String group) throws SchedulerException, DelayedException{
+    public void pauseJob(String group) throws SchedulerException{
         this.delayedStore.pauseJob(group);
         this.notifyMainThread();
     }
@@ -164,7 +164,7 @@ public class SchedulerThread extends Thread{
      * @param group
      * @param code
      */
-    public void resumeJob(String group, String code){
+    public void resumeJob(String group, String code) throws SchedulerException{
         this.delayedStore.resumeJob(group, code);
         this.notifyMainThread();
     }
@@ -173,7 +173,7 @@ public class SchedulerThread extends Thread{
      * 恢复指定组的延时任务
      * @param group
      */
-    public void resumeJob(String group){
+    public void resumeJob(String group) throws SchedulerException{
         this.delayedStore.resumeJob(group);
         this.notifyMainThread();
     }

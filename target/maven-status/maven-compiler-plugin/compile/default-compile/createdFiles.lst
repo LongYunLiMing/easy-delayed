@@ -14,11 +14,8 @@ com/bds/easy/delayed/listener/LogListenerr.class
 com/bds/easy/delayed/core/SchedulerThread.class
 com/bds/easy/delayed/core/SchedulerThread$1.class
 com/bds/easy/delayed/api/DelayedController.class
-com/bds/easy/delayed/support/ClassTypeHandler.class
 com/bds/easy/delayed/job/DemoContinueJob.class
 com/bds/easy/delayed/enums/ActionEnum.class
-com/bds/easy/delayed/mapper/DelayedMapper.class
-com/bds/easy/delayed/baseMapper/MyMapper.class
 com/bds/easy/delayed/plugin/LogPlugin.class
 com/bds/easy/delayed/core/DelayedStore.class
 com/bds/easy/delayed/core/Plugin.class

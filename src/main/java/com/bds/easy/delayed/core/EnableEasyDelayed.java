@@ -1,6 +1,8 @@
 package com.bds.easy.delayed.core;
 
 import com.bds.easy.delayed.api.DelayedController;
+import com.bds.easy.delayed.listener.LogListenerr;
+import com.bds.easy.delayed.plugin.LogPlugin;
 import org.springframework.context.annotation.Import;
 
 import java.lang.annotation.ElementType;
@@ -18,5 +20,5 @@ import java.lang.annotation.Target;
  */
 @Target(ElementType.TYPE)
 @Retention(RetentionPolicy.RUNTIME)
-@Import({EasyDelayedConfiguration.class, DelayedController.class})
+@Import({EasyDelayedConfiguration.class, DelayedController.class,LogListenerr.class, LogPlugin.class})
 public @interface EnableEasyDelayed{}

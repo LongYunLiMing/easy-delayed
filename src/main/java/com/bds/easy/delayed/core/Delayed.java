@@ -2,10 +2,20 @@ package com.bds.easy.delayed.core;
 
 import com.alibaba.fastjson.JSON;
 
-import javax.persistence.Column;
-import javax.persistence.Table;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.Date;
 import java.util.Map;
+
+import static com.bds.easy.delayed.store.JDBCDelayedStore.FIELD_CODE;
+import static com.bds.easy.delayed.store.JDBCDelayedStore.FIELD_DATE;
+import static com.bds.easy.delayed.store.JDBCDelayedStore.FIELD_DESCRIPTION;
+import static com.bds.easy.delayed.store.JDBCDelayedStore.FIELD_GROUP;
+import static com.bds.easy.delayed.store.JDBCDelayedStore.FIELD_ID;
+import static com.bds.easy.delayed.store.JDBCDelayedStore.FIELD_JOB_CLASS;
+import static com.bds.easy.delayed.store.JDBCDelayedStore.FIELD_NAME;
+import static com.bds.easy.delayed.store.JDBCDelayedStore.FIELD_PARAM;
+import static com.bds.easy.delayed.store.JDBCDelayedStore.FIELD_STATUS;
 
 /**
  * description: 延时队列信息
@@ -15,7 +25,6 @@ import java.util.Map;
  * @lastUpdateBy: deli.yang@hand-china.com
  * @lastUpdateDate: 2020/12/29
  */
-@Table(name = "delayed_job")
 public class Delayed{
 
     public Delayed(){}
@@ -25,14 +34,19 @@ public class Delayed{
     }
 
     public Delayed(String group , String code){
+        this(group,code,null,null);
+    }
+
+    public Delayed(String group , String code, Date date, Class<? extends Job> jobClass){
         this.group = group;
         this.code = code;
+        this.date = date;
+        this.jobClass = jobClass;
     }
 
     private Long id;
     private String status;
     //组（必填）
-    @Column(name = "`group`")
     private String group;
     //code（必填）
     private String code;
@@ -97,6 +111,14 @@ public class Delayed{
         this.jobClass = jobClass;
     }
 
+    public void setJobClass(String jobClass){
+        try{
+            this.jobClass = (Class<? extends Job>) Class.forName(jobClass);
+        } catch (Exception e){
+            throw new RuntimeException("job class error");
+        }
+    }
+
     public String getParam(){
         return param;
     }
@@ -129,5 +151,22 @@ public class Delayed{
 
     public void setStatus(String status){
         this.status = status;
+    }
+
+    public static Delayed getInstance(ResultSet rs) throws SQLException{
+        Delayed delayed = new Delayed();
+        delayed.setId(rs.getLong(FIELD_ID));
+        delayed.setJobClass(rs.getString(FIELD_JOB_CLASS));
+        delayed.setName(rs.getString(FIELD_NAME));
+        delayed.setCode(rs.getString(FIELD_CODE));
+        delayed.setGroup(rs.getString(FIELD_GROUP));
+        delayed.setStatus(rs.getString(FIELD_STATUS));
+        delayed.setDescription(rs.getString(FIELD_DESCRIPTION));
+        delayed.setParam(rs.getString(FIELD_PARAM));
+        java.sql.Date date = rs.getDate(FIELD_DATE);
+        if(date != null){
+            delayed.setDate(new java.util.Date(date.getTime()));
+        }
+        return delayed;
     }
 }
