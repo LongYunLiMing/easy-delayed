@@ -9,10 +9,10 @@ package com.bds.easy.delayed.enums;
  * @lastUpdateDate: 2020/12/30
  */
 public enum DelayedStatusEnum{
-    WAIT("wait"),
-    PROCESSING("processing"),
-    TRIGGERED("triggered"),
-    PAUSE("pause");
+    WAIT("WAIT"),
+    PROCESSING("PROCESSING"),
+    TRIGGERED("TRIGGERED"),
+    PAUSE("PAUSE");
     private String status;
 
     DelayedStatusEnum(String status){

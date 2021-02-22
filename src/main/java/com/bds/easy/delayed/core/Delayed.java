@@ -4,6 +4,7 @@ import com.alibaba.fastjson.JSON;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Timestamp;
 import java.util.Date;
 import java.util.Map;
 
@@ -44,7 +45,7 @@ public class Delayed{
         this.jobClass = jobClass;
     }
 
-    private Long id;
+    private String id;
     private String status;
     //组（必填）
     private String group;
@@ -63,11 +64,11 @@ public class Delayed{
 
     private Map<String,String> paramMap;
 
-    public Long getId(){
+    public String getId(){
         return id;
     }
 
-    public void setId(Long id){
+    public void setId(String id){
         this.id = id;
     }
 
@@ -155,7 +156,7 @@ public class Delayed{
 
     public static Delayed getInstance(ResultSet rs) throws SQLException{
         Delayed delayed = new Delayed();
-        delayed.setId(rs.getLong(FIELD_ID));
+        delayed.setId(rs.getString(FIELD_ID));
         delayed.setJobClass(rs.getString(FIELD_JOB_CLASS));
         delayed.setName(rs.getString(FIELD_NAME));
         delayed.setCode(rs.getString(FIELD_CODE));
@@ -163,9 +164,9 @@ public class Delayed{
         delayed.setStatus(rs.getString(FIELD_STATUS));
         delayed.setDescription(rs.getString(FIELD_DESCRIPTION));
         delayed.setParam(rs.getString(FIELD_PARAM));
-        java.sql.Date date = rs.getDate(FIELD_DATE);
-        if(date != null){
-            delayed.setDate(new java.util.Date(date.getTime()));
+        Timestamp timestamp = rs.getTimestamp(FIELD_DATE);
+        if(timestamp != null){
+            delayed.setDate(new java.util.Date(timestamp.getTime()));
         }
         return delayed;
     }

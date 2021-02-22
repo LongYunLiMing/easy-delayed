@@ -2,18 +2,21 @@ package com.bds.easy.delayed.store;
 
 import com.bds.easy.delayed.core.Delayed;
 import com.bds.easy.delayed.core.DelayedStore;
+import com.bds.easy.delayed.enums.DelayedStatusEnum;
 import org.apache.commons.collections.CollectionUtils;
 
 import javax.sql.DataSource;
 import java.sql.Connection;
-import java.sql.Date;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.sql.Timestamp;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 /**
@@ -38,13 +41,13 @@ public class JDBCDelayedStore implements DelayedStore{
     public static final String QUERY_DELAYED_EARLIEST_TRIGGER_SQL = "SELECT ID,STATUS,`GROUP`,CODE,DATE,JOB_CLASS,NAME,DESCRIPTION,PARAM FROM DELAYED_JOB WHERE STATUS IN ('WAIT','PROCESSING') AND DATE > CURRENT_TIMESTAMP ORDER BY DATE ASC LIMIT 0, ?";
     public static final String UPDATE_STATUS_BY_IDS_SQL = "UPDATE DELAYED_JOB SET STATUS = ? WHERE ID IN (IDS)";
     public static final String RESET_DELAYED_SQL = "UPDATE DELAYED_JOB SET STATUS = 'WAIT' STATUS = 'PROCESSING' AND ID IN (IDS)";
-    public static final String SELECT_BY_GROUP_AND_CODE_SQL = "SELECT ID,STATUS,`GROUP`,CODE,DATE,JOB_CLASS,NAME,DESCRIPTION,PARAM FROM DELAYED_JOB WHERE GROUP = ? AND CODE = ?";
-    public static final String SELECT_BY_GROUP_SQL = "SELECT ID,STATUS,`GROUP`,CODE,DATE,JOB_CLASS,NAME,DESCRIPTION,PARAM FROM DELAYED_JOB WHERE GROUP = ?";
-    public static final String DELETE_BY_GROUP_AND_CODE_SQL = "DELETE FROM `DELAYED_JOB` WHERE GROUP = ? AND CODE = ?";
-    public static final String DELETE_BY_GROUP_SQL = "DELETE FROM `DELAYED_JOB` WHERE GROUP = ?";
+    public static final String SELECT_BY_GROUP_AND_CODE_SQL = "SELECT ID,STATUS,`GROUP`,CODE,DATE,JOB_CLASS,NAME,DESCRIPTION,PARAM FROM DELAYED_JOB WHERE `GROUP` = ? AND CODE = ?";
+    public static final String SELECT_BY_GROUP_SQL = "SELECT ID,STATUS,`GROUP`,CODE,DATE,JOB_CLASS,NAME,DESCRIPTION,PARAM FROM DELAYED_JOB WHERE `GROUP` = ?";
+    public static final String DELETE_BY_GROUP_AND_CODE_SQL = "DELETE FROM `DELAYED_JOB` WHERE `GROUP` = ? AND CODE = ?";
+    public static final String DELETE_BY_GROUP_SQL = "DELETE FROM `DELAYED_JOB` WHERE `GROUP` = ?";
     public static final String DELETE_BY_ID_SQL = "DELETE FROM `DELAYED_JOB` WHERE ID = ?";
-    public static final String UPDATE_STATUS_BY_GROUP_CODE_SQL = "UPDATE DELAYED_JOB SET STATUS = ? WHERE GROUP = ? AND CODE = ?";
-    public static final String UPDATE_STATUS_BY_GROUP_SQL = "UPDATE DELAYED_JOB SET STATUS = ? WHERE GROUP = ?";
+    public static final String UPDATE_STATUS_BY_GROUP_CODE_SQL = "UPDATE DELAYED_JOB SET STATUS = ? WHERE `GROUP` = ? AND CODE = ?";
+    public static final String UPDATE_STATUS_BY_GROUP_SQL = "UPDATE DELAYED_JOB SET STATUS = ? WHERE `GROUP` = ?";
 
     private Connection connection;
 
@@ -60,16 +63,18 @@ public class JDBCDelayedStore implements DelayedStore{
 
     @Override
     public void insertDelayed(Delayed delayed) throws DelayedException{
-        delayed.setStatus("wait");
+        delayed.setStatus(DelayedStatusEnum.WAIT.getStatus());
         PreparedStatement ps = null;
         try{
             ps = this.connection.prepareStatement(INSERT_SQL);
-            ps.setString(2,"wait");
+            ps.setString(1, UUID.randomUUID().toString());
+            ps.setString(2,delayed.getStatus());
             ps.setString(3,delayed.getGroup());
             ps.setString(4,delayed.getCode());
             ps.setString(5,delayed.getJobClass().getName());
+            SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
             if(delayed.getDate() != null){
-                ps.setDate(6,new Date(delayed.getDate().getTime()));
+                ps.setTimestamp(6,new Timestamp(delayed.getDate().getTime()));
             }
             ps.setString(7,delayed.getName());
             ps.setString(8,delayed.getDescription());
@@ -96,13 +101,13 @@ public class JDBCDelayedStore implements DelayedStore{
                 result.add(Delayed.getInstance(rs));
             }
             if(CollectionUtils.isNotEmpty(result)){
-                Set<Long> ids = result.stream().map(Delayed :: getId).collect(Collectors.toSet());
+                Set<String> ids = result.stream().map(Delayed :: getId).collect(Collectors.toSet());
                 String sql = this.getUpdateStatusSQL(ids.size());
                 updatePs = this.connection.prepareStatement(sql);
-                updatePs.setString(1,"processing");
+                updatePs.setString(1,DelayedStatusEnum.PROCESSING.getStatus());
                 Integer index = 2;
-                for (Long id : ids){
-                    updatePs.setLong(index,id);
+                for (String id : ids){
+                    updatePs.setString(index,id);
                     index ++;
                 }
                 updatePs.executeUpdate();
@@ -120,9 +125,9 @@ public class JDBCDelayedStore implements DelayedStore{
         StringBuilder ids = new StringBuilder();
         for (Integer i = 0 ; i < size ; i++){
             if(i != 0){
-                ids.append("?");
-            } else {
                 ids.append(",?");
+            } else {
+                ids.append("?");
             }
         }
         return UPDATE_STATUS_BY_IDS_SQL.replace("IDS" , ids);
@@ -133,13 +138,13 @@ public class JDBCDelayedStore implements DelayedStore{
         if(CollectionUtils.isEmpty(delayeds)){
             return;
         }
-        Set<Long> idSet= delayeds.stream().map(Delayed :: getId).collect(Collectors.toSet());
+        Set<String> idSet= delayeds.stream().map(Delayed :: getId).collect(Collectors.toSet());
         StringBuilder ids = new StringBuilder();
         for (Integer i = 0 ; i < idSet.size() ; i++){
             if(i != 0){
-                ids.append("?");
-            } else {
                 ids.append(",?");
+            } else {
+                ids.append("?");
             }
         }
         String sql = RESET_DELAYED_SQL.replace("IDS" , ids);
@@ -147,10 +152,11 @@ public class JDBCDelayedStore implements DelayedStore{
         try{
             ps = this.connection.prepareStatement(sql);
             Integer index = 1;
-            for (Long id : idSet){
-                ps.setLong(index,id);
+            for (String id : idSet){
+                ps.setString(index,id);
                 index ++;
             }
+            ps.executeUpdate();
         }catch (SQLException e){
             throw new DelayedException(e);
         }finally{
@@ -228,7 +234,7 @@ public class JDBCDelayedStore implements DelayedStore{
 
     @Override
     public void pauseJob(String group , String code) throws DelayedException{
-        this.updateStatusByGroupCode("pause",group,code);
+        this.updateStatusByGroupCode(DelayedStatusEnum.PAUSE.getStatus(),group,code);
     }
 
     private void updateStatusByGroupCode(String status, String group, String code) throws DelayedException{
@@ -248,7 +254,7 @@ public class JDBCDelayedStore implements DelayedStore{
 
     @Override
     public void pauseJob(String group) throws DelayedException{
-        this.updateStatusByGroup("pause",group);
+        this.updateStatusByGroup(DelayedStatusEnum.PAUSE.getStatus(),group);
     }
 
     private void updateStatusByGroup(String status, String group) throws DelayedException{
@@ -267,12 +273,12 @@ public class JDBCDelayedStore implements DelayedStore{
 
     @Override
     public void resumeJob(String group , String code) throws DelayedException{
-        this.updateStatusByGroupCode("wait",group, code);
+        this.updateStatusByGroupCode(DelayedStatusEnum.WAIT.getStatus(),group, code);
     }
 
     @Override
     public void resumeJob(String group) throws DelayedException{
-        this.updateStatusByGroup("wait",group );
+        this.updateStatusByGroup(DelayedStatusEnum.WAIT.getStatus(),group );
     }
 
     @Override
@@ -280,7 +286,8 @@ public class JDBCDelayedStore implements DelayedStore{
         PreparedStatement ps = null;
         try{
             ps = this.connection.prepareStatement(DELETE_BY_ID_SQL);
-            ps.setLong(1,delayed.getId());
+            ps.setString(1,delayed.getId());
+            ps.executeUpdate();
         }catch (SQLException e){
             throw new DelayedException(e);
         }finally{
